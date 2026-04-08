@@ -16,39 +16,36 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22' # Required for Capacitor 8+
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21' # Fixes "invalid source release: 21"
 
       - name: Install Capacitor CLI
-        run: npm install @capacitor/cli @capacitor/core @capacitor/android
+        run: npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest
 
-      - name: Initialize Capacitor Project
+      - name: Initialize Project & Web Assets
         run: |
-          # Create a dummy package.json if it doesn't exist
-          if [ ! -f package.json ]; then
-            npm init -y
-          fi
-          # Initialize Capacitor (App Name: MyApp, ID: com.example.app)
+          # Create package.json if it doesn't exist
+          [ -f package.json ] || npm init -y
+          
+          # Initialize Capacitor with the latest defaults
           npx cap init "MyCapacitorApp" "com.example.app" --web-dir www
-
-      - name: Prepare Web Assets
-        run: |
+          
+          # Setup the web folder and move your index.html
           mkdir -p www
-          # Copy your index.html into the web directory
           cp index.html www/
-          # Capacitor requires an app to have dependencies installed in the project
-          npm install @capacitor/android
+          
+          # Install the Android platform package
+          npm install @capacitor/android@latest
 
-      - name: Add Android Platform
-        run: npx cap add android
-
-      - name: Copy Assets to Android
-        run: npx cap copy android
+      - name: Add and Sync Android
+        run: |
+          npx cap add android
+          npx cap sync android
 
       - name: Build APK with Gradle
         run: |
@@ -56,8 +53,8 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
