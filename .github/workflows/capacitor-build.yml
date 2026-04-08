@@ -21,43 +21,56 @@ jobs:
         with:
           node-version: '18'
 
-      # 3️⃣ Install Capacitor CLI
-      - name: Install Capacitor
+      # 3️⃣ Initialize Node project if package.json doesn't exist
+      - name: Initialize Node project
+        run: |
+          if [ ! -f package.json ]; then
+            npm init -y
+          fi
+
+      # 4️⃣ Install Capacitor CLI
+      - name: Install Capacitor CLI
         run: npm install @capacitor/cli -g
 
-      # 4️⃣ Install project dependencies
-      - name: Install Node Modules
-        run: npm install
+      # 5️⃣ Install Capacitor core locally
+      - name: Install Capacitor Core
+        run: npm install @capacitor/core
 
-      # 5️⃣ Initialize Capacitor Android project if not exists
-      - name: Initialize Android Platform
+      # 6️⃣ Initialize Capacitor project if not initialized
+      - name: Initialize Capacitor project
+        run: |
+          if [ ! -f capacitor.config.json ]; then
+            npx cap init HelloWorld com.example.helloworld
+          fi
+
+      # 7️⃣ Copy your existing index.html and assets
+      - name: Add custom index.html and assets
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+          if [ -d css ]; then cp -r css www/; fi
+          if [ -d js ]; then cp -r js www/; fi
+          if [ -d img ]; then cp -r img www/; fi
+
+      # 8️⃣ Add Android platform if not exists
+      - name: Add Android platform
         run: |
           if [ ! -d "android" ]; then
             npx cap add android
           fi
 
-      # 6️⃣ Copy your existing index.html and assets
-      - name: Add custom index.html and assets
-        run: |
-          mkdir -p www
-          cp index.html www/index.html
-          # Copy optional folders if exist
-          if [ -d css ]; then cp -r css www/; fi
-          if [ -d js ]; then cp -r js www/; fi
-          if [ -d img ]; then cp -r img www/; fi
-
-      # 7️⃣ Sync web assets to native Android project
+      # 9️⃣ Sync web assets to native project
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # 8️⃣ Build APK (debug)
+      # 🔟 Build Android APK (debug)
       - name: Build Android APK
         run: |
           cd android
           ./gradlew assembleDebug
           ls -l app/build/outputs/apk/debug/
 
-      # 9️⃣ Upload APK artifact
+      # 1️⃣1️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
