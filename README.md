@@ -1,0 +1,3 @@
+# Cordova-app
+
+Just nothing 
