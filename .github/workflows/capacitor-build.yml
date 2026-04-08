@@ -28,9 +28,9 @@ jobs:
             npm init -y
           fi
 
-      # 4️⃣ Install Capacitor CLI
+      # 4️⃣ Install Capacitor CLI globally
       - name: Install Capacitor CLI
-        run: npm install @capacitor/cli -g
+        run: npm install -g @capacitor/cli
 
       # 5️⃣ Install Capacitor core locally
       - name: Install Capacitor Core
@@ -52,25 +52,29 @@ jobs:
           if [ -d js ]; then cp -r js www/; fi
           if [ -d img ]; then cp -r img www/; fi
 
-      # 8️⃣ Add Android platform if not exists
+      # 8️⃣ Install Android platform (npm package)
+      - name: Install Capacitor Android
+        run: npm install @capacitor/android
+
+      # 9️⃣ Add Android platform folder if missing
       - name: Add Android platform
         run: |
           if [ ! -d "android" ]; then
             npx cap add android
           fi
 
-      # 9️⃣ Sync web assets to native project
+      # 🔟 Sync web assets to native project
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # 🔟 Build Android APK (debug)
+      # 1️⃣1️⃣ Build Android APK (debug)
       - name: Build Android APK
         run: |
           cd android
           ./gradlew assembleDebug
           ls -l app/build/outputs/apk/debug/
 
-      # 1️⃣1️⃣ Upload APK artifact
+      # 1️⃣2️⃣ Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
