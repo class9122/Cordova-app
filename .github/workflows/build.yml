@@ -1,0 +1,67 @@
+name: Build Cordova APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the repo
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      # 2️⃣ Install Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '18'
+
+      # 3️⃣ Install Cordova CLI
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      # 4️⃣ Create a new Cordova project if not exists
+      - name: Create Cordova project
+        run: |
+          if [ ! -d "hello-cordova" ]; then
+            cordova create hello-cordova com.example.helloworld HelloWorld
+          fi
+
+      # 5️⃣ Add Android platform
+      - name: Add Android platform
+        run: |
+          cd hello-cordova
+          cordova platform add android
+
+      # 6️⃣ Replace index.html with Hello World
+      - name: Add Hello World HTML
+        run: |
+          cat <<EOF > hello-cordova/www/index.html
+          <!DOCTYPE html>
+          <html>
+          <head><title>Hello Cordova</title></head>
+          <body>
+            <h1>Hello Cordova!</h1>
+            <p>This APK was built via GitHub Actions.</p>
+          </body>
+          </html>
+          EOF
+
+      # 7️⃣ Build APK (debug)
+      - name: Build APK
+        run: |
+          cd hello-cordova
+          cordova build android --debug
+          ls -l platforms/android/app/build/outputs/apk/debug/
+
+      # 8️⃣ Upload APK artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: hello-cordova-apk
+          path: hello-cordova/platforms/android/app/build/outputs/apk/debug/app-debug.apk
