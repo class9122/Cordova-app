@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout the repo with full history
+      # 1️⃣ Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
@@ -23,11 +23,11 @@ jobs:
         with:
           node-version: '18'
 
-      # 3️⃣ Install Cordova
-      - name: Install Cordova CLI
+      # 3️⃣ Install Cordova CLI
+      - name: Install Cordova
         run: npm install -g cordova
 
-      # 4️⃣ Create Cordova project if it doesn't exist
+      # 4️⃣ Create Cordova project if not exists
       - name: Create Cordova project
         run: |
           if [ ! -d "hello-cordova" ]; then
@@ -35,6 +35,50 @@ jobs:
           fi
 
       # 5️⃣ Add Android platform
+      - name: Add Android platform
+        run: |
+          cd hello-cordova
+          cordova platform add android || echo "Android platform already exists"
+
+      # 6️⃣ Replace index.html with Hello World
+      - name: Add Hello World HTML
+        run: |
+          cat <<EOF > hello-cordova/www/index.html
+          <!DOCTYPE html>
+          <html>
+          <head><title>Hello Cordova</title></head>
+          <body>
+            <h1>Hello Cordova!</h1>
+            <p>This APK was built via GitHub Actions.</p>
+          </body>
+          </html>
+          EOF
+
+      # 7️⃣ Build APK
+      - name: Build APK
+        run: |
+          cd hello-cordova
+          cordova build android --debug
+          ls -l platforms/android/app/build/outputs/apk/debug/
+
+      # 8️⃣ Upload APK artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: hello-cordova-apk
+          path: hello-cordova/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+
+      # 9️⃣ Commit and push only source files
+      - name: Push Cordova project back to repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Only add config.xml, www folder, package.json (exclude node_modules and builds)
+          git add hello-cordova/config.xml hello-cordova/www hello-cordova/package.json hello-cordova/package-lock.json
+          git commit -m "Add/update hello-cordova project via GitHub Actions" || echo "No changes to commit"
+          git push origin HEAD:main      # 5️⃣ Add Android platform
       - name: Add Android platform
         run: |
           cd hello-cordova
