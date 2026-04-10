@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mithila Bites - Premium Food Delivery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        /* === CSS Variables & Theming === */
+        :root {
+            --bg-color: #FDFCFB;
+            --surface-color: #FFFFFF;
+            --text-main: #1A1A1A;
+            --text-muted: #7A7A7A;
+            --accent-color: #D34C41; /* Maithili Terracotta Red */
+            --accent-hover: #B83A30;
+            --verified-color: #1DA1F2;
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.12);
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 28px;
+            --spacing-xs: 8px;
+            --spacing-sm: 16px;
+            --spacing-md: 24px;
+            --spacing-lg: 32px;
+            --max-app-width: 480px;
+        }
+
+        /* === Reset & Base === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #EAEAEA; /* Darker bg for desktop framing */
+            color: var(--text-main);
+            overscroll-behavior-y: none; /* Crucial for custom Pull-to-Refresh */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* === App Container (Mobile First) === */
+        #app {
+            max-width: var(--max-app-width);
+            margin: 0 auto;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* === Pull to Refresh (PTR) === */
+        .ptr-container {
+            height: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Madhubani-inspired SVG Loader */
+        .ptr-loader {
+            width: 40px;
+            height: 40px;
+            transform: scale(0);
+        }
+        
+        .ptr-loader circle {
+            fill: none;
+            stroke: var(--accent-color);
+            stroke-width: 2;
+        }
+
+        .ptr-loader path {
+            fill: var(--accent-color);
+        }
+
+        /* === Top Notification Bar === */
+        .notification-bar {
+            background-color: var(--text-main);
+            color: var(--surface-color);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            will-change: transform;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-bar svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--accent-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .close-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: #999;
+            transition: fill 0.2s;
+        }
+
+        /* === Header & Search === */
+        header {
+            padding: var(--spacing-sm) var(--spacing-md);
+            position: sticky;
+            top: 42px; /* Height of notification roughly */
+            background: rgba(253, 252, 251, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 90;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-container {
+            position: relative;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px 16px 48px;
+            border: none;
+            border-radius: var(--radius-lg);
+            background: var(--surface-color);
+            box-shadow: var(--shadow-sm);
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-main);
+            outline: none;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .search-container:focus-within {
+            transform: translateY(-2px);
+        }
+
+        .search-container:focus-within .search-input {
+            box-shadow: var(--shadow-md);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            fill: var(--text-muted);
+            transition: fill 0.3s;
+        }
+
+        .search-container:focus-within .search-icon {
+            fill: var(--accent-color);
+        }
+
+        /* === Main Content === */
+        main {
+            padding-bottom: 40px;
+        }
+
+        section {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .see-all {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        /* === Verified Badge System === */
+        .verified-wrapper {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        .verified-badge {
+            width: 16px;
+            height: 16px;
+        }
+
+        .verified-tooltip {
+            position: absolute;
+            bottom: 150%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: var(--text-main);
+            color: #FFF;
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+        }
+
+        .verified-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 4px;
+            border-style: solid;
+            border-color: var(--text-main) transparent transparent transparent;
+        }
+
+        .verified-wrapper.active .verified-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* === Featured Card (Hero) === */
+        .featured-wrapper {
+            padding: 0 var(--spacing-md);
+        }
+
+        .card-featured {
+            background: var(--surface-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-featured:active {
+            transform: scale(0.98);
+        }
+
+        .card-featured .img-container {
+            height: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-featured img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-featured .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 30px var(--spacing-md) var(--spacing-sm);
+            color: #FFF;
+        }
+
+        .card-featured .title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-featured .meta {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-featured .price {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--surface-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* === Horizontal Cards === */
+        .horizontal-scroller {
+            display: flex;
+            overflow-x: auto;
+            gap: var(--spacing-sm);
+            padding: 0 var(--spacing-md) var(--spacing-sm);
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .horizontal-scroller::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .card-horizontal {
+            min-width: 280px;
+            background: var(--surface-color);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            display: flex;
+            gap: 14px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease;
+        }
+
+        .card-horizontal:active {
+            transform: scale(0.97);
+        }
+
+        .card-horizontal img {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .card-horizontal .info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card-horizontal .title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: var(--text-main);
+        }
+
+        .card-horizontal .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-horizontal .price {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        /* === Vertical Cards (Grid) === */
+        .vertical-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-sm);
+            padding: 0 var(--spacing-md);
+        }
+
+        .card-vertical {
+            background: var(--surface-color);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-vertical:active {
+            transform: scale(0.96);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-vertical img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .card-vertical .content {
+            padding: 12px;
+        }
+
+        .card-vertical .title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .card-vertical .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-vertical .bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-vertical .price {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .add-btn {
+            background: var(--bg-color);
+            border: 1px solid #E0E0E0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .add-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-main);
+        }
+
+        /* === Cultural Divider === */
+        .cultural-divider {
+            width: 100%;
+            height: 20px;
+            margin: var(--spacing-md) 0;
+            display: flex;
+            justify-content: center;
+            opacity: 0.6;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Pull to Refresh Area -->
+    <div class="ptr-container" id="ptr-container">
+        <!-- Madhubani Inspired Sun/Lotus SVG -->
+        <svg class="ptr-loader" id="ptr-loader" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" stroke-dasharray="10 6" />
+            <circle cx="50" cy="50" r="28" stroke-dasharray="4 4" />
+            <path d="M50 15 L55 25 L45 25 Z M50 85 L55 75 L45 75 Z M15 50 L25 45 L25 55 Z M85 50 L75 45 L75 55 Z M25 25 L35 30 L30 35 Z M75 75 L65 70 L70 65 Z M75 25 L65 30 L70 35 Z M25 75 L35 70 L30 65 Z" />
+            <circle cx="50" cy="50" r="10" fill="var(--accent-color)" stroke="none" />
+        </svg>
+    </div>
+
+    <!-- Notification Bar -->
+    <div class="notification-bar anim-item" id="notification-bar">
+        <div class="notification-content">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/></svg>
+            <span>Free delivery on authentic Maithili Thali today!</span>
+        </div>
+        <button class="close-btn" onclick="dismissNotification()">
+            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-top anim-item">
+            <div class="brand">
+                <h1>
+                    <!-- Small cultural logo mark -->
+                    <svg width="24" height="24" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent-color)" stroke-width="8"/>
+                        <path d="M20 50 Q 50 20 80 50 Q 50 80 20 50" fill="var(--accent-color)"/>
+                    </svg>
+                    Mithila Bites
+                </h1>
+            </div>
+        </div>
+        
+        <div class="search-container anim-item">
+            <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" class="search-input" placeholder="Search for Litti, Pitha, Sweets...">
+        </div>
+    </header>
+
+    <main>
+        <!-- Featured Section -->
+        <section class="anim-item">
+            <div class="featured-wrapper">
+                <div class="card-featured">
+                    <div class="img-container">
+                        <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=800" alt="Mithila Thali Special">
+                    </div>
+                    <div class="price">₹349</div>
+                    <div class="overlay">
+                        <div class="title">
+                            Royal Mithila Thali
+                            <span class="verified-wrapper" onclick="toggleVerified(this)">
+                                <svg class="verified-badge" viewBox="0 0 24 24" fill="var(--verified-color)">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-7.9 7.9z"/>
+                                </svg>
+                                <span class="verified-tooltip">Physically verified by our team</span>
+                            </span>
+                        </div>
+                        <div class="meta">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            Artisan Kitchen • 35-40 mins
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cultural SVG Divider -->
+        <div class="cultural-divider anim-item">
+            <svg width="200" height="12" viewBox="0 0 200 12">
+                <path d="M 0 6 Q 10 0 20 6 T 40 6 T 60 6 T 80 6 T 100 6 T 120 6 T 140 6 T 160 6 T 180 6 T 200 6" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <!-- Recommended Section (Horizontal) -->
+        <section class="anim-item">
+            <div class="section-header">
+                <h2>Handpicked Sweets</h2>
+                <a href="#" class="see-all">See All</a>
+            </div>
+            <div class="horizontal-scroller">
+                <div class="card-horizontal">
+                    <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&q=80&w=300" alt="Makhana Kheer">
+                    <div class="info">
+                        <div class="title">
+                            Makhana Kheer
+                            <span class="verified-wrapper" onclick="toggleVerified(this)">
+                                <svg class="verified-badge" viewBox="0 0 24 24" fill="var(--verified-color)">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-7.9 7.9z"/>
+                                </svg>
+                                <span class="verified-tooltip">Physically verified by our team</span>
+                            </span>
+                        </div>
+                        <div class="desc">Rich foxnut pudding with saffron</div>
+                        <div class="price">₹149</div>
+                    </div>
+                </div>
+                <div class="card-horizontal">
+                    <img src="https://images.unsplash.com/photo-1605807646983-377bc5a76493?auto=format&fit=crop&q=80&w=300" alt="Malpua">
+                    <div class="info">
+                        <div class="title">
+                            Classic Malpua
+                        </div>
+                        <div class="desc">Crispy sweet pancakes with rabri</div>
+                        <div class="price">₹120</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Explore Section (Vertical Grid) -->
+        <section class="anim-item">
+            <div class="section-header">
+                <h2>Authentic Flavors</h2>
+            </div>
+            <div class="vertical-grid">
+                <!-- Grid Card 1 -->
+                <div class="card-vertical">
+                    <img src="https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=400" alt="Litti Chokha">
+                    <div class="content">
+                        <div class="title">
+                            Litti Chokha
+                            <span class="verified-wrapper" onclick="toggleVerified(this)">
+                                <svg class="verified-badge" viewBox="0 0 24 24" fill="var(--verified-color)">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-7.9 7.9z"/>
+                                </svg>
+                                <span class="verified-tooltip">Physically verified by our team</span>
+                            </span>
+                        </div>
+                        <div class="desc">Smoked eggplant & baked wheat</div>
+                        <div class="bottom-row">
+                            <span class="price">₹180</span>
+                            <div class="add-btn">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Card 2 -->
+                <div class="card-vertical">
+                    <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&q=80&w=400" alt="Dal Pitha">
+                    <div class="content">
+                        <div class="title">Dal Pitha</div>
+                        <div class="desc">Steamed rice flour dumplings</div>
+                        <div class="bottom-row">
+                            <span class="price">₹150</span>
+                            <div class="add-btn">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Card 3 -->
+                <div class="card-vertical">
+                    <img src="https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?auto=format&fit=crop&q=80&w=400" alt="Fish Curry">
+                    <div class="content">
+                        <div class="title">
+                            Mustard Fish Curry
+                            <span class="verified-wrapper" onclick="toggleVerified(this)">
+                                <svg class="verified-badge" viewBox="0 0 24 24" fill="var(--verified-color)">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-7.9 7.9z"/>
+                                </svg>
+                                <span class="verified-tooltip">Physically verified by our team</span>
+                            </span>
+                        </div>
+                        <div class="desc">Traditional Rohu preparation</div>
+                        <div class="bottom-row">
+                            <span class="price">₹320</span>
+                            <div class="add-btn">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Card 4 -->
+                <div class="card-vertical">
+                    <img src="https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&q=80&w=400" alt="Samosa Chaat">
+                    <div class="content">
+                        <div class="title">Singhara Chaat</div>
+                        <div class="desc">Crushed samosa with yogurt</div>
+                        <div class="bottom-row">
+                            <span class="price">₹90</span>
+                            <div class="add-btn">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    // --- GSAP Initial Page Load Animations ---
+    document.addEventListener("DOMContentLoaded", () => {
+        // Staggered reveal for UI elements
+        gsap.from(".anim-item", {
+            y: 30,
+            opacity: 0,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "power3.out",
+            delay: 0.1
+        });
+    });
+
+    // --- Notification Bar Logic ---
+    function dismissNotification() {
+        const notifBar = document.getElementById('notification-bar');
+        const header = document.querySelector('header');
+        
+        gsap.to(notifBar, {
+            y: -100,
+            opacity: 0,
+            duration: 0.4,
+            ease: "power2.in",
+            onComplete: () => {
+                notifBar.style.display = 'none';
+                // Readjust sticky header position smoothly
+                gsap.to(header, { top: 0, duration: 0.3, ease: "power2.out" });
+            }
+        });
+    }
+
+    // --- Verified Badge Tooltip Logic ---
+    function toggleVerified(element) {
+        // Close others
+        document.querySelectorAll('.verified-wrapper.active').forEach(el => {
+            if (el !== element) el.classList.remove('active');
+        });
+        
+        // Toggle current
+        element.classList.toggle('active');
+
+        // Auto hide after 2.5 seconds
+        if (element.classList.contains('active')) {
+            setTimeout(() => {
+                element.classList.remove('active');
+            }, 2500);
+        }
+    }
+
+    // Close tooltip if clicked outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.verified-wrapper')) {
+            document.querySelectorAll('.verified-wrapper.active').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+    });
+
+    // --- Top Notch Pull-to-Refresh Logic ---
+    const ptrContainer = document.getElementById('ptr-container');
+    const ptrLoader = document.getElementById('ptr-loader');
+    
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+    let isRefreshing = false;
+    const pullThreshold = 90; // pixels to trigger refresh
+
+    // Listen on the document for touch events
+    document.addEventListener('touchstart', (e) => {
+        if (window.scrollY === 0) {
+            startY = e.touches[0].clientY;
+            isPulling = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isPulling || isRefreshing) return;
+        
+        currentY = e.touches[0].clientY;
+        let pullDistance = currentY - startY;
+
+        // If pulling down at the top of the page
+        if (pullDistance > 0 && window.scrollY === 0) {
+            // Prevent native overscroll refresh on Chrome Android
+            if (e.cancelable) e.preventDefault(); 
+            
+            // Calculate progress and animate loader
+            let progress = Math.min(pullDistance / pullThreshold, 1.2);
+            
+            // Stretch the container container
+            gsap.set(ptrContainer, { height: pullDistance * 0.5 });
+            
+            // Rotate and scale the Madhubani SVG
+            gsap.set(ptrLoader, { 
+                scale: Math.min(progress, 1), 
+                rotation: progress * 360,
+                opacity: progress
+            });
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+        if (!isPulling || isRefreshing) return;
+        isPulling = false;
+        
+        let pullDistance = currentY - startY;
+
+        if (pullDistance > pullThreshold && window.scrollY === 0) {
+            // Trigger Refresh State
+            isRefreshing = true;
+            
+            // Snap container to refreshing height
+            gsap.to(ptrContainer, { height: 70, duration: 0.3, ease: "power2.out" });
+            
+            // Spin the loader infinitely
+            gsap.to(ptrLoader, { 
+                rotation: "+=360", 
+                repeat: -1, 
+                ease: "linear", 
+                duration: 1 
+            });
+
+            // Simulate Network Request / Update Content
+            setTimeout(() => {
+                // Success phase -> Collapse
+                gsap.to(ptrContainer, { 
+                    height: 0, 
+                    duration: 0.4, 
+                    ease: "power2.inOut",
+                    onComplete: () => {
+                        isRefreshing = false;
+                        gsap.killTweensOf(ptrLoader); // Stop spinning
+                        gsap.set(ptrLoader, { scale: 0, opacity: 0 }); // Reset state
+                    }
+                });
+            }, 2000);
+            
+        } else {
+            // Abort pull - Snap back to 0
+            gsap.to(ptrContainer, { height: 0, duration: 0.3, ease: "power2.out" });
+        }
+    });
+
+</script>
+</body>
+</html>
